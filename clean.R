@@ -58,5 +58,8 @@ raw_data$number.of.cows <- gsub("^15k$", "15000", raw_data$number.of.cows, ignor
 raw_data$number.of.cows <- gsub("^75K$", "75000", raw_data$number.of.cows, ignore.case = TRUE)
 raw_data$number.of.cows <- gsub("^Last estimate was indirect.*$", "50000", raw_data$number.of.cows, ignore.case = TRUE)
 
+# Replace Qualtrics response IDs with anonymous numeric IDs
+raw_data$ResponseId <- seq_len(nrow(raw_data))
+
 # Save this cleaned data
 write.csv(raw_data, "clean_data.csv", row.names = FALSE)
