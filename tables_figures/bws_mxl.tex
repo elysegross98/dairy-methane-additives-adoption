@@ -1,0 +1,41 @@
+\begin{table}[H]
+\centering
+\caption{Robustness Check: Conditional Logit vs.\ Mixed Logit}
+\label{tab:bws_mxl}
+\begin{threeparttable}
+\begin{tabular}{lrlrlrl}
+\toprule
+ & \multicolumn{2}{c}{Conditional Logit} & \multicolumn{2}{c}{MXL Mean} & \multicolumn{2}{c}{MXL SD} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5} \cmidrule(lr){6-7}
+Attribute & Coef. & & Coef. & & SD & \\
+\midrule
+Expected Return to Farmer & 1.229*** & & 2.901*** & & 2.314*** & \\
+ & {\small (0.178)} & & {\small (0.643)} & & {\small (0.673)} & \\
+\addlinespace[4pt]
+Effect on Milk Production (yield) & 0 (ref.) & & 0 (ref.) & & --- & \\
+\addlinespace[4pt]
+Cost to Farmer & $-$0.038 & & $-$0.023 & & 1.407*** & \\
+ & {\small (0.141)} & & {\small (0.207)} & & {\small (0.372)} & \\
+\addlinespace[4pt]
+Effect on Milk Components & $-$0.123 & & $-$0.278 & & 0.956 & \\
+ & {\small (0.141)} & & {\small (0.207)} & & {\small (0.389)} & \\
+\addlinespace[4pt]
+Rumen Health & $-$0.138 & & $-$0.232 & & 1.213** & \\
+ & {\small (0.141)} & & {\small (0.240)} & & {\small (0.377)} & \\
+\addlinespace[4pt]
+Feed Intake/Palatability & $-$0.808*** & & $-$1.480*** & & 1.813*** & \\
+ & {\small (0.150)} & & {\small (0.308)} & & {\small (0.415)} & \\
+\addlinespace[4pt]
+Consumer Acceptance & $-$1.742*** & & $-$4.735*** & & 4.850*** & \\
+ & {\small (0.187)} & & {\small (0.851)} & & {\small (1.153)} & \\
+\midrule
+Log-Likelihood & \multicolumn{2}{l}{$-513.77$} & \multicolumn{2}{l}{$-455.38$} & & \\
+$N$ & \multicolumn{2}{l}{$54$} & \multicolumn{2}{l}{$54$} & & \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\footnotesize
+\item Reference category: Effect on Milk Production (yield). MXL estimated with 500 Halton draws; random parameters assumed normally distributed and uncorrelated. Standard errors in parentheses. *** $p < 0.001$, ** $p < 0.01$, * $p < 0.05$.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
