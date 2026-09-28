@@ -21,29 +21,28 @@ for (pkg in required_packages) {
   library(pkg, character.only = TRUE)
 }
 
-# ################################################################# 
-# 2. Build dataset
-
 # #################################################################
 # 2. Build dataset
 
 carbon_prices <- seq(0, 125, by = 1)
 
-cost_levels <- c("$0.04 (Essential Oils)", "$0.30 (3-NOP)")
+cost_levels <- c("$0.04 (Essential Oils, 10% reduction)", "$0.30 (3-NOP, 30% reduction)")
 
 # Annual costs: $/day * 365
 # $0.04 * 365 = $14.60
 # $0.30 * 365 = $109.50
 
-# Breakevens: annual_cost / 1.15 credits
-# $14.60 / 1.15 = $12.70
-# $109.50 / 1.15 = $95.22
+# Breakevens: annual_cost / credits_per_cow_per_year
+# Essential oils: 10% reduction -> 12.8 kg CH4/cow/yr -> 0.0128 t x GWP 30 = 0.384 credits
+#   $14.60 / 0.384 = $38.02
+# 3-NOP: 30% reduction -> 38.4 kg CH4/cow/yr -> 0.0384 t x GWP 30 = 1.15 credits
+#   $109.50 / 1.15 = $95.22
 
-intercepts <- c("$0.04 (Essential Oils)" = -14.60,
-                "$0.30 (3-NOP)"         = -109.50)
+intercepts <- c("$0.04 (Essential Oils, 10% reduction)" = -14.60,
+                "$0.30 (3-NOP, 30% reduction)"         = -109.50)
 
-slopes <- c("$0.04 (Essential Oils)" = 1.15,
-            "$0.30 (3-NOP)"         = 1.15)
+slopes <- c("$0.04 (Essential Oils, 10% reduction)" = 0.384,
+            "$0.30 (3-NOP, 30% reduction)"         = 1.15)
 
 lines_data <- data.frame(
   carbon_price = rep(carbon_prices, 2),
@@ -55,16 +54,16 @@ lines_data$margin <- intercepts[as.character(lines_data$cost)] +
 
 # Breakeven points
 breakevens <- data.frame(
-  x       = c(12.70, 95.22),
-  label   = c("Breakeven at $12.70", "Breakeven at $95.22"),
+  x       = c(38.02, 95.22),
+  label   = c("Breakeven at $38.02", "Breakeven at $95.22"),
   cost    = factor(cost_levels, levels = cost_levels),
-  label_x = c(20, 60),
+  label_x = c(55, 60),
   label_y = c(60, -80)
 )
 
 cost_colors <- c(
-  "$0.04 (Essential Oils)" = "#0072B2",
-  "$0.30 (3-NOP)"         = "#D55E00"
+  "$0.04 (Essential Oils, 10% reduction)" = "#0072B2",
+  "$0.30 (3-NOP, 30% reduction)"         = "#D55E00"
 )
 
 # #################################################################
