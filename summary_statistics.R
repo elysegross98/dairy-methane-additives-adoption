@@ -54,13 +54,16 @@ cows_by_region <- clean_data %>%
     region == 3 ~ "Midwest",
     region == 5 ~ "South",
     region == 8 ~ "West",
-    TRUE ~ NA_character_
+    TRUE ~ "Region not reported"
   )) %>%
-  filter(!is.na(Region)) %>%
   group_by(Region) %>%
   summarise(Count = sum(number.of.cows, na.rm = TRUE), .groups = "drop") %>%
+  filter(Count > 0) %>%
   mutate(Percent = round(100 * Count / sum(Count), 1)) %>%
+  arrange(Region == "Region not reported", Region) %>%
   rename(Variable = Region)
+
+stopifnot(sum(cows_by_region$Count) == total_cows)   
 
 # Add a total row
 cows_region_table <- bind_rows(
@@ -75,10 +78,9 @@ clean_data$age <- as.numeric(clean_data$age)
 class(clean_data$age)
 mean(clean_data$age, na.rm=TRUE)
 
-# Average Age (estimate)
-age_counts <- c(5, 15, 11, 9, 14)   
-age_midpoints <- c(23.5, 34.5, 44.5, 54.5, 65) # Midpoints of age bins (adjust if needed)
-avg_age <- weighted.mean(age_midpoints, age_counts, na.rm = TRUE) # Compute weighted mean age
+age_midpoints <- c(`1` = 23.5, `2` = 34.5, `3` = 44.5, `4` = 54.5, `5` = 65)
+age_valid     <- clean_data$age[clean_data$age %in% 1:5] # Midpoints of age bins
+avg_age       <- mean(age_midpoints[as.character(age_valid)]) # Compute weighted mean age
 
 # Age table
 age_table <- clean_data %>%
@@ -86,9 +88,8 @@ age_table <- clean_data %>%
     age == 1 ~ "18–29 years old",
     age == 2 ~ "30–39 years old",
     age == 3 ~ "40–49 years old",
-    age == 4 ~ "50–59 years",
+    age == 4 ~ "50–59 years old",
     age == 5 ~ "60 years or older",
-    age == 6 ~ "Prefer not to say",
     TRUE ~ NA_character_
   )) %>%
   filter(!is.na(Age)) %>%
@@ -117,7 +118,6 @@ gender_table <- clean_data %>%
   mutate(Gender = case_when(
     gender == 1 ~ "Male",
     gender == 2 ~ "Female",
-    gender == 3 ~ "Prefer not to say",
     TRUE ~ NA_character_
   )) %>%
   filter(!is.na(Gender)) %>%
@@ -137,7 +137,6 @@ education_table <- clean_data %>%
     education == 1 ~ "Less than a Bachelor's Degree",
     education == 2 ~ "Bachelor's Degree",
     education == 3 ~ "Graduate or Professional Degree",
-    education == 4 ~ "Prefer not to say",
     TRUE ~ NA_character_
   )) %>%
   filter(!is.na(Education)) %>%
@@ -146,7 +145,10 @@ education_table <- clean_data %>%
   rename(
     Variable = Education,
     Count = n
-  )
+  ) %>%
+  arrange(match(Variable, c("Less than a Bachelor's Degree",
+                            "Bachelor's Degree",
+                            "Graduate or Professional Degree")))
 
 # ################################################################# 
 # 6. REGION ##
@@ -184,7 +186,7 @@ jobfunction_flags <- clean_data %>%
     has_rev  = grepl("(^|,)6(,|$)", job.function)
   )
 
-N_resp <- nrow(clean_data)
+N_resp <- sum(!is.na(clean_data$job.function) & trimws(clean_data$job.function) != "")
 
 jobfunction_table <- jobfunction_flags %>%
   summarise(
@@ -229,10 +231,10 @@ Table_summary_freq_clean <- bind_rows(
   education_table,
   jobfunction_table
 ) %>%
-  mutate(Count   = as.character(Count),
-         Percent = as.character(Percent)) %>%
-  mutate(across(everything(), ~replace_na(., ""))) %>%
-  mutate(Percent = ifelse(Percent == "", Percent, paste0(Percent, "\\%")))
+  mutate(
+    Count   = ifelse(is.na(Count),   "", prettyNum(Count, big.mark = ",")),
+    Percent = ifelse(is.na(Percent), "", paste0(sprintf("%.1f", Percent), "\\%"))
+  )
 
 # ################################################################# 
 # 9. SAVE TABLE OUTPUT
@@ -242,21 +244,16 @@ save_kable(
     Table_summary_freq_clean,
     format    = "latex",
     escape    = FALSE,
-    align     = "lcc",
+    align     = "lrr",
     col.names = c("Variable", "Count", "Percent"),
     caption   = "Summary Statistics",
+    label     = "summary_stats",
     booktabs  = TRUE
   ) %>%
-    footnote(
-      general        = "Notes: The number of respondents who completed the Demographic portion of the survey was 56. The number of respondents who completed the Job Function portion was 69. ``Prefer not to say'' responses were omitted and some respondents left questions blank, so sections with such responses do not sum to 56 or 69, respectively.",
-      general_title  = "",
-      threeparttable = TRUE,
-      escape         = FALSE
-    ) %>%
     kable_styling(
       full_width    = FALSE,
       position      = "center",
-      latex_options = c("scale_down", "hold_position")
+      latex_options = "hold_position"
     ) %>%
     pack_rows("Gender",
               1,
@@ -275,6 +272,12 @@ save_kable(
               nrow(gender_table) + nrow(age_table) + nrow(region_table) + nrow(cows_region_table) + nrow(education_table)) %>%
     pack_rows("Job Functions",
               nrow(gender_table) + nrow(age_table) + nrow(region_table) + nrow(cows_region_table) + nrow(education_table) + 1,
-              nrow(gender_table) + nrow(age_table) + nrow(region_table) + nrow(cows_region_table) + nrow(education_table) + nrow(jobfunction_table)),
+              nrow(gender_table) + nrow(age_table) + nrow(region_table) + nrow(cows_region_table) + nrow(education_table) + nrow(jobfunction_table)) %>%
+    footnote(
+      general        = "Notes: The number of respondents who completed the Demographic portion of the survey was 56. The number of respondents who completed the Job Function portion was 69. Respondents could select multiple job functions, so percentages in that section do not sum to 100\\\\%. Some respondents left questions blank or selected ``Prefer not to say''; such responses were dropped, so sections with such responses do not sum to 56 or 69, respectively. Number of cows by region includes cows from respondents who did not report a region.",
+      general_title  = "",
+      threeparttable = TRUE,
+      escape         = FALSE
+    ),
   file = "tables_figures/summary_table_frequencies.tex"
 )
