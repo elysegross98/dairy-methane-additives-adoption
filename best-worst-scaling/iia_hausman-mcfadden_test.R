@@ -2,7 +2,7 @@
 # Best Worst - Hausman-McFadden Test for IIA
 # ################################################################# 
 # Elyse Gross 
-# Mar 30, 2026
+# Oct 15, 2026
 # R version 4.5.0
 
 # ################################################################# 
@@ -157,7 +157,6 @@ bws_mxl_fixed <- mlogit(
 internal_names <- names(coef(bws_mxl_fixed))
 
 # Confirm conditional logit & mlogit models match 
-  #(meaning the IIA test on mlogit applies to the support.BWS model)
 cbind(
   clogit = coef(bws_model)[1:6],
   mlogit = coef(bws_mxl_fixed)
@@ -166,24 +165,33 @@ cbind(
 # ################################################################# 
 # 9. Hausman-McFadden Test of IIA
 
-attr_to_questions <- list(
-  "1" = c(1, 4, 6),  # Consumer Acceptance
-  "2" = c(1, 3, 5),  # Rumen Health
-  "3" = c(1, 2, 7),  # Effect on Milk Components
-  "4" = c(2, 4, 5),  # Cost to Farmer
-  "5" = c(2, 3, 6),  # Expected Return
-  "6" = c(3, 4, 7),  # Feed Intake
-  "7" = c(5, 6, 7)   # Milk Production (your reference — skip)
-)
+make_formula <- function(omit) {
+  as.formula(paste("RES ~ 0 +",
+                   paste0("`", attr_cols[-omit], "`", collapse = " + ")))
+}
+
+# Full model with attribute 6 as reference (only needed when dropping attribute 7)
+bws_mxl_ref6 <- mlogit(make_formula(6), data = bws_mlogit)
 
 hausman_results <- list()
 
-for (attr_num in names(attr_to_questions)) {
+for (x in 1:7) {
   
-  questions_to_drop <- attr_to_questions[[attr_num]]
+  # Reference attribute: 7 normally, 6 when attribute 7 is the one dropped
+  ref    <- if (x == 7) 6 else 7
+  full_m <- if (ref == 7) bws_mxl_fixed else bws_mxl_ref6
   
-  bws_ml_restricted <- bws_ml %>%
-    filter(!( (as.numeric(STR) - 1) %% nquestions + 1 ) %in% questions_to_drop)
+  # Drop every choice set in which attribute x appears
+  strata_with_x <- bws_ml %>%
+    group_by(STR) %>%
+    filter(any(.data[[attr_cols[x]]] != 0)) %>%
+    pull(STR) %>%
+    unique()
+  
+  bws_ml_restricted <- bws_ml %>% filter(!STR %in% strata_with_x)
+  
+  # Check: Attribute x must be completely absent now
+  stopifnot(all(bws_ml_restricted[[attr_cols[x]]] == 0))
   
   bws_mlogit_r <- dfidx(
     bws_ml_restricted,
@@ -191,23 +199,17 @@ for (attr_num in names(attr_to_questions)) {
     choice = "RES"
   )
   
-  tryCatch({
-    bws_mxl_restricted <- mlogit(
-      mxl_formula,
-      data = bws_mlogit_r
-    )
-    
-    ht <- hmftest(bws_mxl_fixed, bws_mxl_restricted)
-    hausman_results[[paste0("Drop_attr_", attr_num)]] <- ht
-    cat("\n--- Dropping attribute", attr_num, "---\n")
-    print(ht)
-    
-  }, error = function(e) {
-    cat("\nDropping attribute", attr_num, "failed:", e$message, "\n")
-  })
+  # Restricted model omits both the dropped attribute and the reference
+  restricted_m <- mlogit(make_formula(c(x, ref)), data = bws_mlogit_r)
+  
+  ht <- hmftest(full_m, restricted_m)
+  hausman_results[[paste0("Drop_attr_", x)]] <- ht
+  
+  cat("\n--- Dropping attribute", x, "(reference =", ref, ") ---\n")
+  cat("Coefficients in restricted model:", length(coef(restricted_m)), "\n")
+  print(ht)
 }
 
-# Summary of Hausman results
 hausman_summary <- data.frame(
   Attribute = names(hausman_results),
   ChiSq     = sapply(hausman_results, function(x) round(x$statistic, 4)),
@@ -217,10 +219,13 @@ hausman_summary <- data.frame(
 rownames(hausman_summary) <- NULL
 print(hausman_summary)
 
+stopifnot(all(hausman_summary$df == 5))
+
 # ################################################################# 
 # 10. LaTeX Table for Hausman-McFadden Test of IIA
 
 hausman_summary %>%
+  select(-df) %>%
   mutate(
     Attribute = c(
       "Consumer Acceptance",
@@ -234,7 +239,6 @@ hausman_summary %>%
   ) %>%
   rename(`Attribute Dropped` = Attribute,
          `$\\chi^2$`         = ChiSq,
-         `df`                = df,
          `\\textit{p}-value` = p_value) %>%
   kable(
     format   = "latex",
@@ -252,9 +256,10 @@ hausman_summary %>%
   footnote(
     general = paste(
       "Null hypothesis is that IIA holds.",
-      "No test statistic is significant at $p < 0.05$,",
-      "providing no evidence of IIA violation.",
-      "Tests follow Hausman and McFadden (1984)."
+      "All tests have 5 degrees of freedom.",
+      "Tests follow Hausman and McFadden (1984).",
+      "The test dropping Cost to Farmer rejects at $p < 0.05$;",
+      "the remaining six do not."
     ),
     general_title  = "",
     threeparttable = TRUE,
