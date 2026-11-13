@@ -3,7 +3,7 @@
 #     Region, Sell & Use, 
 # ################################################################# 
 # Elyse Gross 
-# Mar 30, 2026
+# October 22, 2026
 # R version 4.5.0
 
 # ################################################################# 
@@ -16,7 +16,7 @@ rm(list = ls())
 setwd("~/Desktop/EKGThesis")
 
 # Install and load packages
-required_packages <- c("dplyr", "tidyr", "support.BWS", "survival", "broom", "knitr", "kableExtra")
+required_packages <- c("dplyr", "tidyr", "support.BWS", "survival", "broom", "knitr", "kableExtra", "tibble", "sandwich")
 for (pkg in required_packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     install.packages(pkg)
@@ -66,6 +66,21 @@ bw_data <- bw_data %>%
     tannins.sell = recode(tannins.sell,`9` = 0, `8` = 1),
     tannins.use  = recode(tannins.use, `9` = 0, `8` = 1)
   )
+
+# Adding helper function for clustered SEs
+clustered_coefs <- function(model) {
+  V  <- vcovCL(model, cluster = ~ID, type = "HC1")
+  b  <- coef(model)
+  se <- sqrt(diag(V))[names(b)]
+  se[is.na(b)] <- NA
+  tibble(
+    term      = gsub("`", "", names(b)),
+    estimate  = b,
+    std.error = se,
+    conf.low  = b - qnorm(0.975) * se,
+    conf.high = b + qnorm(0.975) * se
+  )
+}
 
 # #################################################################
 # 3. NE versus rest Robustness Check
@@ -206,17 +221,8 @@ nattributes <- 3
       sprintf("%.3f [%.3f, %.3f]", est, lo, hi)
     }
     
-    coef_ne <- tidy(bws_model_ne, conf.int = TRUE) %>%
-      select(term, estimate, conf.low, conf.high) %>%
-      mutate(term = gsub("`", "", term))
-    
-    coef_else <- tidy(bws_model_else, conf.int = TRUE) %>%
-      select(term, estimate, conf.low, conf.high) %>%
-      mutate(term = gsub("`", "", term))
-    
-    # Use attribute_names to set row order, add reference row
-    ref_row <- tibble(term = "Effect on Milk Production (yield)",
-                      estimate = NA, conf.low = NA, conf.high = NA)
+    coef_ne   <- clustered_coefs(bws_model_ne)
+    coef_else <- clustered_coefs(bws_model_else)
     
     coef_combined <- full_join(coef_ne, coef_else, by = "term", suffix = c("_ne", "_else")) %>%
       mutate(
@@ -239,7 +245,7 @@ nattributes <- 3
       ) %>%
       kable_styling(latex_options = "hold_position", full_width = FALSE, position = "center") %>%
       footnote(
-        general = "Coefficients from conditional logit model. 95\\\\% confidence intervals in brackets. Effect on Milk Production (yield) is the reference category.",
+        general = "Coefficients from conditional logit model. 95\\\\% confidence intervals in brackets, based on standard errors clustered by respondent. Effect on Milk Production (yield) is the reference category.",
         general_title  = "",
         threeparttable = TRUE,
         escape         = FALSE
@@ -338,9 +344,10 @@ nattributes <- 3
     
     mu_yes       <- coef(bws_model_yes)
     n_sim        <- 10000
+    set.seed(42)
     mu_clean_yes <- mu_yes[!is.na(mu_yes)]
     
-    var_matrix_clean_yes <- vcov(bws_model_yes)
+    var_matrix_clean_yes <- vcovCL(bws_model_yes, cluster = ~ID, type = "HC1")
     var_matrix_clean_yes <- var_matrix_clean_yes[!is.na(mu_yes), !is.na(mu_yes)]
     var_matrix_clean_yes <- var_matrix_clean_yes + diag(1e-6, nrow(var_matrix_clean_yes))
     
@@ -421,7 +428,8 @@ nattributes <- 3
     mu_no       <- coef(bws_model_no)
     mu_clean_no <- mu_no[!is.na(mu_no)]
     
-    var_matrix_clean_no <- vcov(bws_model_no)
+    set.seed(43)
+    var_matrix_clean_no <- vcovCL(bws_model_no, cluster = ~ID, type = "HC1")
     var_matrix_clean_no <- var_matrix_clean_no[!is.na(mu_no), !is.na(mu_no)]
     var_matrix_clean_no <- var_matrix_clean_no + diag(1e-6, nrow(var_matrix_clean_no))
     
@@ -460,16 +468,8 @@ nattributes <- 3
       sprintf("%.3f [%.3f, %.3f]", est, lo, hi)
     }
     
-    coef_yes <- tidy(bws_model_yes, conf.int = TRUE) %>%
-      select(term, estimate, conf.low, conf.high) %>%
-      mutate(term = gsub("`", "", term))
-    
-    coef_no <- tidy(bws_model_no, conf.int = TRUE) %>%
-      select(term, estimate, conf.low, conf.high) %>%
-      mutate(term = gsub("`", "", term))
-    
-    ref_row <- tibble(term = "Effect on Milk Production (yield)",
-                      estimate = NA, conf.low = NA, conf.high = NA)
+    coef_yes <- clustered_coefs(bws_model_yes)
+    coef_no  <- clustered_coefs(bws_model_no)
     
     coef_combined_selluse <- full_join(coef_yes, coef_no, by = "term", suffix = c("_yes", "_no")) %>%
       mutate(
@@ -492,7 +492,7 @@ nattributes <- 3
       ) %>%
       kable_styling(latex_options = "hold_position", full_width = FALSE, position = "center") %>%
       footnote(
-        general = "Coefficients from conditional logit model. 95\\\\% confidence intervals in brackets. Effect on Milk Production (yield) is the reference category.",
+        general = "Coefficients from conditional logit model. 95\\\\% confidence intervals in brackets, based on standard errors clustered by respondent. Effect on Milk Production (yield) is the reference category.",
         general_title  = "",
         threeparttable = TRUE,
         escape         = FALSE

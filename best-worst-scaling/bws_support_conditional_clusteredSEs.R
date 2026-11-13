@@ -180,10 +180,31 @@ stopifnot(identical(names(coef(bws_model)), rownames(vcov_clustered)))
 bws_model_clustered <- coeftest(bws_model, vcov = vcov_clustered)
 print(bws_model_clustered)
 
+# cross-check against survival built-in cluster-robust SEs
+bws_model_cl2 <- clogit(
+  as.formula(paste("RES ~", paste(attr_cols_bt, collapse = " + "),
+                   "+ strata(STR) + cluster(ID)")),
+  data = bws_ready, method = "efron"
+)
+summary(bws_model_cl2)   # they agree
+
+# clustered results matched by name, reference (NA) row dropped
+ok <- !is.na(coef(bws_model))
+cl <- bws_model_clustered[names(coef(bws_model))[ok], , drop = FALSE]
+
+star_fn <- function(p) {
+  case_when(
+    p < 0.01 ~ "**",
+    p < 0.05 ~ "*",
+    TRUE     ~ ""
+  )
+}
+
 # ################################################################# 
 # 9. Krinsky-Robb Simulation for Preference Shares
 
 n_sim <- 10000
+set.seed(42)
 
 mu       <- coef(bws_model)
 mu_clean <- mu[!is.na(mu)]
@@ -220,26 +241,19 @@ print(results_bws)
 # ################################################################# 
 # 10. Make LaTeX Table (using clustered SEs)
 
-# Pull coefficients from clogit, but SEs + p-values from clustered results
+# Pull coefficients from clogit
 coef_df <- data.frame(
-  Attribute = names(coef(bws_model)),
-  Estimate  = coef(bws_model),
-  SE        = bws_model_clustered[, "Std. Error"],
-  p.value   = bws_model_clustered[, "Pr(>|z|)"],
+  Attribute = names(coef(bws_model))[ok],
+  Estimate  = coef(bws_model)[ok],
+  SE        = cl[, "Std. Error"],
+  p.value   = cl[, "Pr(>|z|)"],
   row.names = NULL
 ) %>%
-  mutate(
-    Stars = case_when(
-      p.value < 0.001 ~ "***",
-      p.value < 0.01  ~ "**",
-      p.value < 0.05  ~ "*",
-      TRUE            ~ ""
-    )
-  )
-
-# Start from results_bws (unchanged - preference shares don't depend on clustering)
+  mutate(Stars = star_fn(p.value))
+# Join shares to coefficients
 combined <- results_bws %>%
   left_join(coef_df, by = "Attribute") %>%
+  mutate(Attribute = gsub("`", "", Attribute)) %>%   # NEW: strip backticks for LaTeX
   arrange(desc(Mean))
 
 # Build LaTeX rows (unchanged logic)
@@ -292,9 +306,9 @@ tex <- c(
     "\\item Reference category: Effect on Milk Production (yield). ",
     "Log-Likelihood: $", log_lik, "$. $N = ", n_resp, "$ respondents. ",
     "Standard errors clustered by respondent. ",
-    "Preference shares estimated via Krinsky-Robb simulation (10{,}000 draws). ",
+    "Preference shares estimated via Krinsky-Robb simulation (10{,}000 draws from the cluster-robust covariance matrix). ",
     "Shares sum to 100\\%. ",
-    "*** $p < 0.001$, ** $p < 0.01$, * $p < 0.05$."
+    "** $p < 0.01$, * $p < 0.05$."
   ),
   "\\end{tablenotes}",
   "\\end{threeparttable}",
@@ -304,7 +318,7 @@ tex <- c(
 writeLines(tex, "tables_figures/bws_table.tex")
 
 # #################################################################
-# 12. MXL Robustness Check
+# 11. MXL Robustness Check
 
 # install and load newly necessary packages
 required_packages <- c("mlogit")
@@ -390,20 +404,8 @@ sd_se       <- mxl_sds[,   "Std. Error"]
 sd_pval     <- mxl_sds[,   "Pr(>|z|)"]
 mxl_log_lik <- round(as.numeric(logLik(bws_mxl)), 2)
 
-star_fn <- function(p) {
-  case_when(
-    p < 0.001 ~ "***",
-    p < 0.01  ~ "**",
-    p < 0.05  ~ "*",
-    TRUE      ~ ""
-  )
-}
-
-clogit_pvals <- bws_model_clustered[, "Pr(>|z|)"]
-clogit_pvals <- clogit_pvals[!is.na(coef(bws_model))]
-
-clogit_se <- bws_model_clustered[, "Std. Error"]
-clogit_se <- clogit_se[!is.na(coef(bws_model))]
+clogit_pvals <- cl[, "Pr(>|z|)"]
+clogit_se    <- cl[, "Std. Error"]
 
 mxl_table_df <- data.frame(
   Attribute   = clean_names,
@@ -478,9 +480,9 @@ tex_mxl <- c(
   "\\footnotesize",
   paste0(
     "\\item Reference category: Effect on Milk Production (yield). ",
-    "MXL estimated with 500 Halton draws; random parameters assumed normally distributed and uncorrelated. ",
-    "Standard errors in parentheses. ",
-    "*** $p < 0.001$, ** $p < 0.01$, * $p < 0.05$."
+    "MXL estimated with 500 random draws; random parameters assumed normally distributed and uncorrelated. ",
+    "Standard errors in parentheses. Conditional logit standard errors clustered by respondent; MXL standard errors are conventional. ",
+    "** $p < 0.01$, * $p < 0.05$."
   ),
   "\\end{tablenotes}",
   "\\end{threeparttable}",
