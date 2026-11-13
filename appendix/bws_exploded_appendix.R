@@ -14,7 +14,7 @@ rm(list = ls())
 setwd("~/Desktop/EKGThesis")
 
 # Load pacakges and install if necessary
-required_packages <- c("dplyr", "tidyr", "mlogit", "tibble", "boot", "knitr", "kableExtra")
+required_packages <- c("dplyr", "tidyr", "tibble", "knitr", "kableExtra", "survival", "sandwich", "lmtest")
 for (pkg in required_packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
     install.packages(pkg)
@@ -119,62 +119,8 @@ bw_long_attribute$chid <- as.numeric(as.factor(
   paste(bw_long_attribute$ResponseId, bw_long_attribute$Question)
 ))
 
-
-# #################################################################
-# 5. Descriptive: Best Minus Worst
-
-bw_scores <- bw_long_attribute %>%
-  filter(Choice != 0) %>%
-  group_by(Attribute) %>%
-  summarise(
-    Best     = sum(Choice == 1),
-    Worst    = sum(Choice == -1),
-    BW_Score = sum(Choice)
-  ) %>%
-  arrange(desc(BW_Score))
-
-bw_scores %>%
-  arrange(desc(BW_Score)) %>%
-  rename(
-    `Best`      = Best,
-    `Worst`     = Worst,
-    `B minus W` = BW_Score
-  ) %>%
-  remove_rownames() %>%
-  column_to_rownames("Attribute") %>%
-  kable(
-    format   = "latex",
-    booktabs = TRUE,
-    escape   = FALSE,
-    caption  = "Best-Worst Count Scores for Feed Additive Attributes",
-    label    = "bwscores",
-    align    = c("r", "r", "r")
-  ) %>%
-  kable_styling(
-    latex_options = c("hold_position"),
-    full_width    = FALSE,
-    position      = "center"
-  ) %>%
-  footnote(
-    general = paste(
-      "Notes: Based on 61 respondents completing 7 best-worst choice tasks each.",
-      "B minus W = number of times chosen as best minus number of times chosen as worst.",
-      "Twenty-one responses had a best choice recorded without a corresponding worst choice",
-      "and are included in best and worst counts separately."
-    ),
-    general_title  = "",
-    threeparttable = TRUE,
-    escape         = FALSE
-  ) %>%
-  save_kable("tables_figures/bestworst_scores_table.tex")
-
-# Close the caption gap
-tex <- readLines("tables_figures/bestworst_scores_table.tex")
-tex <- gsub("(\\\\caption\\{.*\\})", "\\1\n\\\\vspace{-8pt}", tex)
-writeLines(tex, "tables_figures/bestworst_scores_table.tex")
-
 # ################################################################# 
-# 6. Format for Ranked Order 
+# 5. Format for Ranked Order 
 
 # Best task: all 3 attributes, best item is chosen
 best_data <- bw_long_attribute %>%
@@ -190,14 +136,14 @@ best_data <- bw_long_attribute %>%
 middle_data <- bw_long_attribute %>%
   group_by(ResponseId, Question) %>%
   filter(
-    sum(Choice == 1, na.rm = TRUE) == 1,
-    sum(Choice == -1, na.rm = TRUE) == 1,
-    sum(is.na(Choice)) == 1
+    sum(Choice == 1)  == 1,
+    sum(Choice == -1) == 1,
+    sum(Choice == 0)  == 1
   ) %>%
-  filter(is.na(Choice) | Choice == -1) %>%  # remove best item
+  filter(Choice != 1) %>%   # remove best item
   ungroup() %>%
   mutate(
-    chosen  = as.integer(is.na(Choice)),
+    chosen  = as.integer(Choice == 0),
     task_id = paste(ResponseId, Question, "second", sep = "_")
   )
 
@@ -233,33 +179,28 @@ bw_exploded <- bw_exploded %>%
   mutate(chid_new = as.numeric(as.factor(task_id)))
 
 # ################################################################# 
-# 7. Best-Worst Model (MNL using mlogit)
+# 6. Best-Worst Model (Exploded Logit using clogit)
 
-# Build mlogit data
-bw_exploded_data <- mlogit.data(
-  bw_exploded,
-  choice   = "chosen",
-  shape    = "long",
-  alt.var  = "Attribute",
-  chid.var = "chid_new",
-  id.var   = "ResponseId"
-)
-
-# MNL model 
-bw_mnl_exploded <- mlogit(
-  chosen ~ Attribute - 1,
-  data = bw_exploded_data
+bw_mnl_exploded <- clogit(
+  chosen ~ Attribute + strata(chid_new),
+  data   = bw_exploded,
+  method = "efron"
 )
 summary(bw_mnl_exploded)
 
+# Clustered vcov
+vcov_clustered   <- vcovCL(bw_mnl_exploded, cluster = ~ResponseId, type = "HC1")
+bw_mnl_clustered <- coeftest(bw_mnl_exploded, vcov = vcov_clustered)
+print(bw_mnl_clustered)
+
 # ################################################################# 
-# 8. Krinsky-Robb Simulation for Standard Errors
+# 7. Krinsky-Robb Simulation for Standard Errors
 
 mu         <- coef(bw_mnl_exploded)
-var_matrix <- vcov(bw_mnl_exploded)
+var_matrix <- vcov_clustered
 
-set.seed(123)
-n_sim  <- 1000
+set.seed(42)
+n_sim  <- 10000
 T_chol <- t(chol(var_matrix))
 
 sim_matrix <- matrix(NA, nrow = n_sim, ncol = length(mu))
@@ -290,11 +231,11 @@ results <- data.frame(
 print(results) # results
 
 # #################################################################
-# 9. Combined Coefficients + Preference Shares Table (LaTeX)
+# 8. Combined Coefficients + Preference Shares Table (LaTeX)
 
 library(kableExtra)
 
-coef_summary <- summary(bw_mnl_exploded)$CoefTable
+coef_summary <- bw_mnl_clustered
 
 name_map <- c(
   "ConsumerAcceptance"   = "Consumer Acceptance",
@@ -326,10 +267,8 @@ coef_df <- data.frame(
 ) %>%
   mutate(
     Stars = case_when(
-      p.value < 0.001 ~ "***",
       p.value < 0.01  ~ "**",
       p.value < 0.05  ~ "*",
-      p.value < 0.1   ~ ".",
       TRUE            ~ ""
     ),
     # Format: "0.1234*** \n(0.0567)"
@@ -375,8 +314,8 @@ for (i in seq_len(nrow(combined))) {
   attr_label <- r$Attribute
   
   if (!is.na(r$StdError)) {
-    coef_line1 <- paste0(round(r$Estimate, 4), r$Stars)
-    coef_line2 <- paste0("(", round(r$StdError, 4), ")")
+    coef_line1 <- paste0(gsub("^-", "$-$", formatC(r$Estimate, format = "f", digits = 3)), r$Stars)
+    coef_line2 <- paste0("(", formatC(r$StdError, format = "f", digits = 3), ")")
   } else {
     coef_line1 <- r$Coef_Cell  # "0 (reference)"
     coef_line2 <- ""
@@ -419,9 +358,10 @@ footer <- c(
   paste0("\\item Reference category: Effect on Milk Production (yield). ",
          "Log-Likelihood: ", round(as.numeric(logLik(bw_mnl_exploded)), 2), ". ",
          "N = ", n_distinct(bw_exploded$ResponseId), " respondents. ",
-         "Preference shares estimated via Krinsky-Robb simulation (1,000 draws). ",
+         "Standard errors clustered by respondent. ",
+         "Preference shares estimated via Krinsky-Robb simulation (10{,}000 draws). ",
          "Shares sum to 100\\%. ",
-         "*** $p < 0.001$, ** $p < 0.01$, * $p < 0.05$, $\\cdot$ $p < 0.1$."),
+         "** $p < 0.01$, * $p < 0.05$."),
   "\\end{tablenotes}",
   "\\end{threeparttable}",
   "\\end{table}"
