@@ -11,9 +11,10 @@ Run the scripts in order from the repository root:
 
 1. `01_clean.R` – cleans raw survey data. This is not useful unless raw data is aquired.
 2. `02_perceptions_attitudes.R` – Table 4
-3. `03_bws.R` – Tables 2 and 5
-4. `04_robustness.R` – Appendix Tables 6–9
-5. `05_figures.R` – Figures 1 and 3
+4. `03_concerns.R` – Tables 2 and 5
+5. `04_.R` – Figure 1
+6. `05_economic_feasibility.R` – Figure 3
+7. `04_robustness.R` – Appendix Tables 6–9
 
 ## Output
 Tables and figures are saved to `tables_figures/`
