@@ -11,7 +11,7 @@ Run the scripts in order from the repository root:
 
 1. `01_clean.R` – cleans raw survey data. This is not useful unless raw data is aquired. Others use `clean_data.csv`.
 2. `02_summary_statistics.R` – Table 3
-3. `03_perceptions_attitudes.R` – Table 4
+3. `03_perceptions.R` – Table 4
 4. `04_economic_feasibility.R` – Figure 3
 5. `05_epa_inventory_figure1.R` – Figure 1. Uses `emissions_ag_sectpr.xlsx'
 7. `best_worst_scaling/06_bws_support_conditional_clusteredSEs.R`
