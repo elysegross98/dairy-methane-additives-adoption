@@ -2,7 +2,6 @@
 # Contingent Valuation - WTR
 #     Appendix C
 # ################################################################# 
-# Elyse Gross 
 # Apr 27, 2026
 # R version 4.5.0
 
@@ -10,8 +9,6 @@
 # 1. Load packages & raw data
 
 rm(list = ls())
-
-setwd("~/Desktop/EKGThesis")
 
 # Load pacakges and install if necessary
 required_packages <- c("dplyr", "tidyr", "ggplot2", "mlogit", "tibble", "knitr", "kableExtra", "survival", "DCchoice")
@@ -23,7 +20,7 @@ for (pkg in required_packages) {
 }
 
 # Import Data
-clean_data <- read.csv("Data/clean_data.csv")
+clean_data <- read.csv("clean_data.csv")
 
 # ################################################################# 
 # 2. Clean Data

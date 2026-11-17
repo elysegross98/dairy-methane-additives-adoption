@@ -1,7 +1,6 @@
 # ################################################################# 
 # Cleaning
 # ################################################################# 
-# Elyse Gross 
 # Mar 30, 2026
 # R version 4.5.0
 
@@ -10,9 +9,6 @@
 
 # Clear 
 rm(list = ls())
-
-# Set working directory
-setwd("~/Desktop/EKGThesis/Data")
 
 # Install and load packages
 required_packages <- c("dplyr")

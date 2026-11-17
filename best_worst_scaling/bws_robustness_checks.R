@@ -2,7 +2,6 @@
 # Best Worst - Robustness Checks
 #     Region, Sell & Use, 
 # ################################################################# 
-# Elyse Gross 
 # October 22, 2026
 # R version 4.5.0
 
@@ -11,9 +10,6 @@
 
 # Clear 
 rm(list = ls())
-
-# Set working directory
-setwd("~/Desktop/EKGThesis")
 
 # Install and load packages
 required_packages <- c("dplyr", "tidyr", "support.BWS", "survival", "broom", "knitr", "kableExtra", "tibble", "sandwich")
@@ -25,7 +21,7 @@ for (pkg in required_packages) {
 }
 
 # Import Data
-clean_data <- read.csv("Data/clean_data.csv")
+clean_data <- read.csv("clean_data.csv")
 
 # ################################################################# 
 # 2. Clean Data

@@ -1,7 +1,6 @@
 # ################################################################# 
 # Concerns
 # ################################################################# 
-# Elyse Gross 
 # Mar 30, 2026
 # R version 4.5.0
 
@@ -9,8 +8,6 @@
 # 1. Load packages & raw data
 
 rm(list = ls()) 
-
-setwd("~/Desktop/EKGThesis")
 
 # Load libraries
 required_packages <- c("kableExtra", "tidyverse", "showtext")
@@ -22,7 +19,7 @@ for (pkg in required_packages) {
 }
 
 # Import Data
-clean_data <- read.csv("Data/clean_data.csv")
+clean_data <- read.csv("clean_data.csv")
 
 # ################################################################# 
 # 2. Set up data

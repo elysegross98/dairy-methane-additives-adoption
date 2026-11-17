@@ -1,7 +1,6 @@
 # ################################################################# 
 # Best Worst - Hausman-McFadden Test for IIA
 # ################################################################# 
-# Elyse Gross 
 # Oct 15, 2026
 # R version 4.5.0
 
@@ -9,8 +8,6 @@
 # 1. Load packages & raw data
 
 rm(list = ls())
-
-setwd("~/Desktop/EKGThesis")
 
 required_packages <- c("dplyr", "tidyr", "support.BWS", "survival", "broom", "tibble", "mlogit", "kableExtra")
 for (pkg in required_packages) {
@@ -21,7 +18,7 @@ for (pkg in required_packages) {
 }
 
 # Import Data
-clean_data <- read.csv("Data/clean_data.csv")
+clean_data <- read.csv("clean_data.csv")
 
 # ################################################################# 
 # 2. Clean Data for BWS

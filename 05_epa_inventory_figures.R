@@ -1,7 +1,6 @@
 # ################################################################# 
 # Introductory/Background Figures
 # ################################################################# 
-# Elyse Gross 
 # Apr 27, 2026
 # R version 4.5.0
 
@@ -9,9 +8,6 @@
 # 1. Load packages & raw data
 
 rm(list = ls())
-
-# Set working directory
-setwd("~/Desktop/EKGThesis")
 
 # Load pacakges and install if necessary
 required_packages <- c("tidyverse", "tidyr", "dplyr", "readxl", "ggplot2")
@@ -26,7 +22,7 @@ for (pkg in required_packages) {
 # 1. Ag Sector Emissions
 
 # Important Data
-fig1_data <- read_excel("epa_inventory/emissions_ag_sector.xlsx")
+fig1_data <- read_excel("emissions_ag_sector.xlsx")
 
 # Reshape to long format
 df <- fig1_data %>%
@@ -84,7 +80,7 @@ ggsave("tables_figures/figure1_ag_emissions.pdf", plot = p1, width = 6, height =
 # ################################################################# 
 # 2. Ag Emissions by Gas
 
-fig2_data <- read_excel("epa_inventory/emissions_ag_bygas.xlsx")
+fig2_data <- read_excel("epa-inventory/emissions_ag_bygas.xlsx")
 
 colnames(fig2_data)[1] <- "Gas"
 
@@ -143,7 +139,7 @@ ggsave("tables_figures/figure2_gas.pdf", plot = p2, width = 6, height = 4, units
 # ################################################################# 
 # 3. Ag Methane Emissions by Species
 
-fig3_data <- read_excel("epa_inventory/emissions_ag_livestockspecies.xlsx")
+fig3_data <- read_excel("epa-inventory/emissions_ag_livestockspecies.xlsx")
 
 colnames(fig3_data)[1] <- "Species"
 
@@ -201,7 +197,7 @@ ggsave("tables_figures/figure3_species.pdf", plot = p3, width = 6, height = 4, u
 # ################################################################# 
 # 4. Enteric Emissions of Dairy Cattle over time
 
-fig4_data <- read_excel("epa_inventory/enteric_emissions_ag_species.xlsx")
+fig4_data <- read_excel("epa-inventory/enteric_emissions_ag_species.xlsx")
 
 colnames(fig4_data)[1] <- "Species"
 

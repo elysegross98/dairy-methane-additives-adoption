@@ -1,7 +1,6 @@
 # ################################################################# 
 # Economic Feasibility Figure
 # ################################################################# 
-# Elyse Gross 
 # September 27, 2026
 # R version 4.5.0
 
@@ -9,8 +8,6 @@
 # 1. Load packages
 
 rm(list = ls()) 
-
-setwd("~/Desktop/EKGThesis")
 
 # Load libraries
 required_packages <- c("scales", "ggplot2")

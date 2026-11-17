@@ -1,7 +1,6 @@
 # ################################################################# 
 # Summary Statistics
 # ################################################################# 
-# Elyse Gross 
 # April 1, 2026
 # R version 4.5.0
 
@@ -9,8 +8,6 @@
 # 1. Load packages & data
 
 rm(list = ls()) 
-
-setwd("~/Desktop/EKGThesis")
 
 # Load libraries
 required_packages <- c("multcompView", "dplyr", "tidyr", "ggplot2", "kableExtra", "rstatix", "forcats")
@@ -22,7 +19,7 @@ for (pkg in required_packages) {
 }
 
 # Import Data
-clean_data <- read.csv("Data/clean_data.csv")
+clean_data <- read.csv("clean_data.csv")
 
 # Keep only the columns for perceptions, etc. & demographics
 clean_data <- clean_data %>%

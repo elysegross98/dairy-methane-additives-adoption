@@ -2,7 +2,6 @@
 # Best Worst - Support.BWS (Conditional Logit) with clustered SEs
 #         & Mixed Logit Robustness Check 
 # ################################################################# 
-# Elyse Gross 
 # September 27, 2026
 # R version 4.5.0
 
@@ -10,8 +9,6 @@
 # 1. Load packages & raw data
 
 rm(list = ls())
-
-setwd("~/Desktop/EKGThesis")
 
 required_packages <- c("dplyr", "tidyr", "support.BWS", "survival", "broom", "tibble", "kableExtra")
 for (pkg in required_packages) {
@@ -25,7 +22,7 @@ library(sandwich)
 library(lmtest)
 
 # Import Data
-clean_data <- read.csv("Data/clean_data.csv")
+clean_data <- read.csv("clean_data.csv")
 
 # ################################################################# 
 # 2. Clean Data
