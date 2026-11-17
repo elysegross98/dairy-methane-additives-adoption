@@ -11,9 +11,10 @@ Run the scripts in order from the repository root:
 
 1. `01_clean.R` – cleans raw survey data. This is not useful unless raw data is aquired.
 2. `02_perceptions_attitudes.R` – Table 4
-4. `03_concerns.R` – Tables 2 and 5
-5. `04_.R` – Figure 1
-6. `05_economic_feasibility.R` – Figure 3
+3. `03_concerns.R` – Tables 2 and 5
+4. `epa_inventory/04_epa_inventory_figures.R` – Figure 1
+5. `05_economic_feasibility.R` – Figure 3
+6. 
 7. `04_robustness.R` – Appendix Tables 6–9
 
 ## Output
