@@ -9,15 +9,15 @@ This repository contains files that are necessary to replicate the results of th
 ## How to replicate
 Run the scripts in order from the repository root:
 
-1. `01_clean.R` – cleans raw survey data. This is not useful unless raw data is aquired.
+1. `01_clean.R` – cleans raw survey data. This is not useful unless raw data is aquired. Others use `clean_data.csv`.
 2. `02_summary_statistics.R` – Table 3
 3. `03_perceptions_attitudes.R` – Table 4
 4. `04_economic_feasibility.R` – Figure 3
-5. `05_epa_inventory_figures.R` – Figure 1
-6. `best_worst_scaling/06_bws_support_conditional_clusteredSEs.R`
-7. `best_worst_scaling/07_iia_hausman-mcfadden_test.R`
-8. `best_worst_scaling/08_bws_robustness_checks.R`
-9. `best_worst_scaling/09_bws_exploded_appendix.R`
+5. `05_epa_inventory_figure1.R` – Figure 1. Uses `emissions_ag_sectpr.xlsx'
+7. `best_worst_scaling/06_bws_support_conditional_clusteredSEs.R`
+8. `best_worst_scaling/07_iia_hausman-mcfadden_test.R`
+9. `best_worst_scaling/08_bws_robustness_checks.R`
+10. `best_worst_scaling/09_bws_exploded_appendix.R`
 
 `supplementary/` contains code for analyses not reported in this paper.
 
