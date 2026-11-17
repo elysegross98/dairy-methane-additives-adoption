@@ -14,9 +14,11 @@ Run the scripts in order from the repository root:
 3. `03_perceptions_attitudes.R` – Table 4
 4. `04_economic_feasibility.R` – Figure 3
 5. `epa_inventory/04_epa_inventory_figures.R` – Figure 1
-6. 
+6. `best_worst_scaling/
 7. 
-8. `04_robustness.R` – Appendix Tables 6–9
+8. `0_robustness.R` – Appendix Tables 6–9
+
+`supplementary/' contains code for analyses not reported in this paper.
 
 ## Output
 Tables and figures are saved to `tables_figures/`
