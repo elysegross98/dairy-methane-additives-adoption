@@ -10,7 +10,7 @@
 rm(list = ls())
 
 # Set working directory
-setwd("~/Desktop/EKGThesis")
+# setwd("")
 
 # Load pacakges and install if necessary
 required_packages <- c("tidyverse", "tidyr", "dplyr", "readxl", "ggplot2")
