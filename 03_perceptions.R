@@ -9,8 +9,6 @@
 
 rm(list = ls()) 
 
-setwd("~/Desktop/EKGThesis")
-
 # Load libraries
 required_packages <- c("multcompView", "dplyr", "tidyr", "ggplot2", "kableExtra", "rstatix", "forcats", "xtable")
 for (pkg in required_packages) {
