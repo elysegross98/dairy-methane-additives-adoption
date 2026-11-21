@@ -3,8 +3,7 @@
 This repository contains files that are necessary to replicate the results of the paper. Upon publication, the paper will be included here as well.
 
 ## Data
-- `clean_data.csv` contains already cleaned and fully anonymous data.
-- The data that support the findings of this study were collected via an online Qualtrics survey of U.S. dairy nutritionists conducted from November 7, 2025, until February 18, 2026. The data are not publicly available due to the confidentiality protections required by the IRB protocol governing this research (Cornell University IRB Protocol \#0150135). Anonymized data may be available from the corresponding author upon reasonable request.
+- The data that support the findings of this study were collected via an online Qualtrics survey of U.S. dairy nutritionists conducted from November 7, 2025, until February 18, 2026. The data are not publicly available due to the confidentiality protections required by the IRB protocol governing this research (Cornell University IRB Protocol \#0150135). Anonymized data (`clean_data.csv` which contains already cleaned and fully anonymous data) may be available from the corresponding author upon reasonable request.
 
 ## How to replicate
 Run the scripts in order from the repository root:
